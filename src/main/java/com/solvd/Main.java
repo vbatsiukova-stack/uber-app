@@ -1,6 +1,6 @@
 package com.solvd;
 
-import com.solvd.dao.UserDAO;
+import com.solvd.dao.UserXmlDAO;
 import com.solvd.model.User;
 import com.solvd.service.UserService;
 
@@ -10,8 +10,8 @@ import java.util.Optional;
 public class Main {
     public static void main(String[] args) {
 
-        // создаём DAO и передаём в сервис
-        UserService userService = new UserService(new UserDAO());
+        // теперь используем XML DAO
+        UserService userService = new UserService(new UserXmlDAO());
 
         // CREATE
         User user = new User();
