@@ -1,19 +1,30 @@
 package com.solvd.model;
 
+import com.solvd.adapter.LocalDateTimeAdapter;
+import jakarta.xml.bind.annotation.*;
+import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+
 import java.time.LocalDateTime;
 
+@XmlAccessorType(XmlAccessType.FIELD)
 public class User {
+
+    @XmlAttribute
     private Long id;
+
     private String firstName;
     private String lastName;
     private String email;
     private String phoneNumber;
+
+    @XmlJavaTypeAdapter(LocalDateTimeAdapter.class)
     private LocalDateTime createdAt;
 
     public User() {
     }
 
-    public User(Long id, String firstName, String lastName, String email, String phoneNumber, LocalDateTime createdAt) {
+    public User(Long id, String firstName, String lastName, String email,
+                String phoneNumber, LocalDateTime createdAt) {
         this.id = id;
         this.firstName = firstName;
         this.lastName = lastName;

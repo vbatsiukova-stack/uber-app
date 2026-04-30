@@ -2,7 +2,9 @@ package com.solvd;
 
 import com.solvd.dao.UserDAO;
 import com.solvd.model.User;
+import com.solvd.model.Users;
 import com.solvd.service.UserService;
+import com.solvd.xml.UserJaxbParser;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -15,6 +17,7 @@ public class Main {
 
     public static void main(String[] args) {
 
+        // ===== ТВОЯ СУЩЕСТВУЮЩАЯ ЛОГИКА (DOM DAO) =====
         UserService userService = new UserService(new UserDAO());
 
         User user = new User();
@@ -41,5 +44,14 @@ public class Main {
 
         boolean deleted = userService.deleteById(updatedUser.getId());
         LOGGER.info("Deleted: {}", deleted);
+
+        // ===== JAXB ЧАСТЬ (для задания) =====
+        LOGGER.info("===== JAXB PARSING =====");
+
+        UserJaxbParser parser = new UserJaxbParser();
+
+        Users users = parser.readUsers();
+
+        users.getUsers().forEach(u -> LOGGER.info("JAXB User: {}", u));
     }
 }
