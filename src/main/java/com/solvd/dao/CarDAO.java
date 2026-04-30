@@ -2,10 +2,7 @@ package com.solvd.dao;
 
 import com.solvd.model.Car;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -24,19 +21,18 @@ public class CarDAO extends AbstractMySQLDAO implements IBaseDAO<Car> {
 
         try {
             connection = getConnection();
-            PreparedStatement st = connection.prepareStatement(INSERT);
 
-            st.setInt(1, car.getDriverId());
-            st.setString(2, car.getBrand());
-            st.setString(3, car.getModel());
-            st.setString(4, car.getColor());
-            st.setString(5, car.getPlateNumber());
-            st.setInt(6, car.getYear());
+            try (PreparedStatement st = connection.prepareStatement(INSERT)) {
+                st.setInt(1, car.getDriverId());
+                st.setString(2, car.getBrand());
+                st.setString(3, car.getModel());
+                st.setString(4, car.getColor());
+                st.setString(5, car.getPlateNumber());
+                st.setInt(6, car.getYear());
 
-            st.executeUpdate();
-            st.close();
-
-            return car;
+                st.executeUpdate();
+                return car;
+            }
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -51,20 +47,17 @@ public class CarDAO extends AbstractMySQLDAO implements IBaseDAO<Car> {
 
         try {
             connection = getConnection();
-            PreparedStatement st = connection.prepareStatement(GET_BY_ID);
-            st.setLong(1, id);
 
-            ResultSet rs = st.executeQuery();
+            try (PreparedStatement st = connection.prepareStatement(GET_BY_ID)) {
+                st.setLong(1, id);
 
-            if (rs.next()) {
-                Car car = mapRow(rs);
-                rs.close();
-                st.close();
-                return Optional.of(car);
+                try (ResultSet rs = st.executeQuery()) {
+                    if (rs.next()) {
+                        return Optional.of(mapRow(rs));
+                    }
+                }
             }
 
-            rs.close();
-            st.close();
             return Optional.empty();
 
         } catch (SQLException e) {
@@ -81,15 +74,15 @@ public class CarDAO extends AbstractMySQLDAO implements IBaseDAO<Car> {
 
         try {
             connection = getConnection();
-            PreparedStatement st = connection.prepareStatement(GET_ALL);
-            ResultSet rs = st.executeQuery();
 
-            while (rs.next()) {
-                list.add(mapRow(rs));
+            try (PreparedStatement st = connection.prepareStatement(GET_ALL);
+                 ResultSet rs = st.executeQuery()) {
+
+                while (rs.next()) {
+                    list.add(mapRow(rs));
+                }
             }
 
-            rs.close();
-            st.close();
             return list;
 
         } catch (SQLException e) {
@@ -105,20 +98,19 @@ public class CarDAO extends AbstractMySQLDAO implements IBaseDAO<Car> {
 
         try {
             connection = getConnection();
-            PreparedStatement st = connection.prepareStatement(UPDATE);
 
-            st.setInt(1, car.getDriverId());
-            st.setString(2, car.getBrand());
-            st.setString(3, car.getModel());
-            st.setString(4, car.getColor());
-            st.setString(5, car.getPlateNumber());
-            st.setInt(6, car.getYear());
-            st.setInt(7, car.getId());
+            try (PreparedStatement st = connection.prepareStatement(UPDATE)) {
+                st.setInt(1, car.getDriverId());
+                st.setString(2, car.getBrand());
+                st.setString(3, car.getModel());
+                st.setString(4, car.getColor());
+                st.setString(5, car.getPlateNumber());
+                st.setInt(6, car.getYear());
+                st.setInt(7, car.getId());
 
-            st.executeUpdate();
-            st.close();
-
-            return car;
+                st.executeUpdate();
+                return car;
+            }
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -133,13 +125,11 @@ public class CarDAO extends AbstractMySQLDAO implements IBaseDAO<Car> {
 
         try {
             connection = getConnection();
-            PreparedStatement st = connection.prepareStatement(DELETE);
-            st.setLong(1, id);
 
-            boolean deleted = st.executeUpdate() > 0;
-            st.close();
-
-            return deleted;
+            try (PreparedStatement st = connection.prepareStatement(DELETE)) {
+                st.setLong(1, id);
+                return st.executeUpdate() > 0;
+            }
 
         } catch (SQLException e) {
             throw new RuntimeException(e);

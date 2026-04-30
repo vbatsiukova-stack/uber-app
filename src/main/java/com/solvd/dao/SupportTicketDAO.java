@@ -2,12 +2,7 @@ package com.solvd.dao;
 
 import com.solvd.model.SupportTicket;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.sql.Types;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -26,24 +21,23 @@ public class SupportTicketDAO extends AbstractMySQLDAO implements IBaseDAO<Suppo
 
         try {
             connection = getConnection();
-            PreparedStatement st = connection.prepareStatement(INSERT);
 
-            st.setInt(1, ticket.getUserId());
-            st.setInt(2, ticket.getTripId());
-            st.setString(3, ticket.getSubject());
-            st.setString(4, ticket.getMessageText());
-            st.setString(5, ticket.getTicketStatus());
+            try (PreparedStatement st = connection.prepareStatement(INSERT)) {
+                st.setInt(1, ticket.getUserId());
+                st.setInt(2, ticket.getTripId());
+                st.setString(3, ticket.getSubject());
+                st.setString(4, ticket.getMessageText());
+                st.setString(5, ticket.getTicketStatus());
 
-            if (ticket.getCreatedAt() != null) {
-                st.setTimestamp(6, Timestamp.valueOf(ticket.getCreatedAt()));
-            } else {
-                st.setNull(6, Types.TIMESTAMP);
+                if (ticket.getCreatedAt() != null) {
+                    st.setTimestamp(6, Timestamp.valueOf(ticket.getCreatedAt()));
+                } else {
+                    st.setNull(6, Types.TIMESTAMP);
+                }
+
+                st.executeUpdate();
+                return ticket;
             }
-
-            st.executeUpdate();
-            st.close();
-
-            return ticket;
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -58,20 +52,17 @@ public class SupportTicketDAO extends AbstractMySQLDAO implements IBaseDAO<Suppo
 
         try {
             connection = getConnection();
-            PreparedStatement st = connection.prepareStatement(GET_BY_ID);
-            st.setLong(1, id);
 
-            ResultSet rs = st.executeQuery();
+            try (PreparedStatement st = connection.prepareStatement(GET_BY_ID)) {
+                st.setLong(1, id);
 
-            if (rs.next()) {
-                SupportTicket ticket = mapRow(rs);
-                rs.close();
-                st.close();
-                return Optional.of(ticket);
+                try (ResultSet rs = st.executeQuery()) {
+                    if (rs.next()) {
+                        return Optional.of(mapRow(rs));
+                    }
+                }
             }
 
-            rs.close();
-            st.close();
             return Optional.empty();
 
         } catch (SQLException e) {
@@ -88,22 +79,22 @@ public class SupportTicketDAO extends AbstractMySQLDAO implements IBaseDAO<Suppo
 
         try {
             connection = getConnection();
-            PreparedStatement st = connection.prepareStatement(GET_ALL);
-            ResultSet rs = st.executeQuery();
 
-            while (rs.next()) {
-                list.add(mapRow(rs));
+            try (PreparedStatement st = connection.prepareStatement(GET_ALL);
+                 ResultSet rs = st.executeQuery()) {
+
+                while (rs.next()) {
+                    list.add(mapRow(rs));
+                }
             }
-
-            rs.close();
-            st.close();
-            return list;
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
         } finally {
             releaseConnection(connection);
         }
+
+        return list;
     }
 
     @Override
@@ -112,26 +103,25 @@ public class SupportTicketDAO extends AbstractMySQLDAO implements IBaseDAO<Suppo
 
         try {
             connection = getConnection();
-            PreparedStatement st = connection.prepareStatement(UPDATE);
 
-            st.setInt(1, ticket.getUserId());
-            st.setInt(2, ticket.getTripId());
-            st.setString(3, ticket.getSubject());
-            st.setString(4, ticket.getMessageText());
-            st.setString(5, ticket.getTicketStatus());
+            try (PreparedStatement st = connection.prepareStatement(UPDATE)) {
+                st.setInt(1, ticket.getUserId());
+                st.setInt(2, ticket.getTripId());
+                st.setString(3, ticket.getSubject());
+                st.setString(4, ticket.getMessageText());
+                st.setString(5, ticket.getTicketStatus());
 
-            if (ticket.getCreatedAt() != null) {
-                st.setTimestamp(6, Timestamp.valueOf(ticket.getCreatedAt()));
-            } else {
-                st.setNull(6, Types.TIMESTAMP);
+                if (ticket.getCreatedAt() != null) {
+                    st.setTimestamp(6, Timestamp.valueOf(ticket.getCreatedAt()));
+                } else {
+                    st.setNull(6, Types.TIMESTAMP);
+                }
+
+                st.setInt(7, ticket.getId());
+
+                st.executeUpdate();
+                return ticket;
             }
-
-            st.setInt(7, ticket.getId());
-
-            st.executeUpdate();
-            st.close();
-
-            return ticket;
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -146,13 +136,11 @@ public class SupportTicketDAO extends AbstractMySQLDAO implements IBaseDAO<Suppo
 
         try {
             connection = getConnection();
-            PreparedStatement st = connection.prepareStatement(DELETE);
-            st.setLong(1, id);
 
-            boolean deleted = st.executeUpdate() > 0;
-            st.close();
-
-            return deleted;
+            try (PreparedStatement st = connection.prepareStatement(DELETE)) {
+                st.setLong(1, id);
+                return st.executeUpdate() > 0;
+            }
 
         } catch (SQLException e) {
             throw new RuntimeException(e);

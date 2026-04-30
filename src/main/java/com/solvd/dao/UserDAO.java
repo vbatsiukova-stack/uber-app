@@ -2,12 +2,7 @@ package com.solvd.dao;
 
 import com.solvd.model.User;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.sql.Timestamp;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -30,45 +25,35 @@ public class UserDAO extends AbstractMySQLDAO implements IUserDAO {
     @Override
     public User create(User user) {
         Connection connection = null;
-        PreparedStatement statement = null;
-        ResultSet generatedKeys = null;
 
         try {
             connection = getConnection();
-            statement = connection.prepareStatement(INSERT, Statement.RETURN_GENERATED_KEYS);
 
-            statement.setString(1, user.getFirstName());
-            statement.setString(2, user.getLastName());
-            statement.setString(3, user.getEmail());
-            statement.setString(4, user.getPhoneNumber());
-            statement.setTimestamp(5, Timestamp.valueOf(user.getCreatedAt()));
+            try (PreparedStatement statement = connection.prepareStatement(INSERT, Statement.RETURN_GENERATED_KEYS)) {
+                statement.setString(1, user.getFirstName());
+                statement.setString(2, user.getLastName());
+                statement.setString(3, user.getEmail());
+                statement.setString(4, user.getPhoneNumber());
+                statement.setTimestamp(5, Timestamp.valueOf(user.getCreatedAt()));
 
-            int rowsInserted = statement.executeUpdate();
+                int rowsInserted = statement.executeUpdate();
 
-            if (rowsInserted == 0) {
-                throw new RuntimeException("Error creating user: no rows inserted");
+                if (rowsInserted == 0) {
+                    throw new RuntimeException("Error creating user: no rows inserted");
+                }
+
+                try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
+                    if (generatedKeys.next()) {
+                        user.setId(generatedKeys.getLong(1));
+                    }
+                }
+
+                return user;
             }
-
-            generatedKeys = statement.getGeneratedKeys();
-            if (generatedKeys.next()) {
-                user.setId(generatedKeys.getLong(1));
-            }
-
-            return user;
 
         } catch (SQLException e) {
             throw new RuntimeException("Error creating user", e);
         } finally {
-            try {
-                if (generatedKeys != null) {
-                    generatedKeys.close();
-                }
-                if (statement != null) {
-                    statement.close();
-                }
-            } catch (SQLException e) {
-                throw new RuntimeException("Error closing resources", e);
-            }
             releaseConnection(connection);
         }
     }
@@ -76,18 +61,18 @@ public class UserDAO extends AbstractMySQLDAO implements IUserDAO {
     @Override
     public Optional<User> getById(Long id) {
         Connection connection = null;
-        PreparedStatement statement = null;
-        ResultSet rs = null;
 
         try {
             connection = getConnection();
-            statement = connection.prepareStatement(GET_BY_ID);
-            statement.setLong(1, id);
 
-            rs = statement.executeQuery();
+            try (PreparedStatement statement = connection.prepareStatement(GET_BY_ID)) {
+                statement.setLong(1, id);
 
-            if (rs.next()) {
-                return Optional.of(mapRow(rs));
+                try (ResultSet rs = statement.executeQuery()) {
+                    if (rs.next()) {
+                        return Optional.of(mapRow(rs));
+                    }
+                }
             }
 
             return Optional.empty();
@@ -95,16 +80,6 @@ public class UserDAO extends AbstractMySQLDAO implements IUserDAO {
         } catch (SQLException e) {
             throw new RuntimeException("Error getting user by id", e);
         } finally {
-            try {
-                if (rs != null) {
-                    rs.close();
-                }
-                if (statement != null) {
-                    statement.close();
-                }
-            } catch (SQLException e) {
-                throw new RuntimeException("Error closing resources", e);
-            }
             releaseConnection(connection);
         }
     }
@@ -113,71 +88,54 @@ public class UserDAO extends AbstractMySQLDAO implements IUserDAO {
     public List<User> getAll() {
         List<User> users = new ArrayList<>();
         Connection connection = null;
-        PreparedStatement statement = null;
-        ResultSet rs = null;
 
         try {
             connection = getConnection();
-            statement = connection.prepareStatement(GET_ALL);
-            rs = statement.executeQuery();
 
-            while (rs.next()) {
-                users.add(mapRow(rs));
+            try (PreparedStatement statement = connection.prepareStatement(GET_ALL);
+                 ResultSet rs = statement.executeQuery()) {
+
+                while (rs.next()) {
+                    users.add(mapRow(rs));
+                }
             }
-
-            return users;
 
         } catch (SQLException e) {
             throw new RuntimeException("Error getting all users", e);
         } finally {
-            try {
-                if (rs != null) {
-                    rs.close();
-                }
-                if (statement != null) {
-                    statement.close();
-                }
-            } catch (SQLException e) {
-                throw new RuntimeException("Error closing resources", e);
-            }
             releaseConnection(connection);
         }
+
+        return users;
     }
 
     @Override
     public User update(User user) {
         Connection connection = null;
-        PreparedStatement statement = null;
 
         try {
             connection = getConnection();
-            statement = connection.prepareStatement(UPDATE);
 
-            statement.setString(1, user.getFirstName());
-            statement.setString(2, user.getLastName());
-            statement.setString(3, user.getEmail());
-            statement.setString(4, user.getPhoneNumber());
-            statement.setTimestamp(5, Timestamp.valueOf(user.getCreatedAt()));
-            statement.setLong(6, user.getId());
+            try (PreparedStatement statement = connection.prepareStatement(UPDATE)) {
+                statement.setString(1, user.getFirstName());
+                statement.setString(2, user.getLastName());
+                statement.setString(3, user.getEmail());
+                statement.setString(4, user.getPhoneNumber());
+                statement.setTimestamp(5, Timestamp.valueOf(user.getCreatedAt()));
+                statement.setLong(6, user.getId());
 
-            int rowsUpdated = statement.executeUpdate();
+                int rowsUpdated = statement.executeUpdate();
 
-            if (rowsUpdated == 0) {
-                throw new RuntimeException("Error updating user: no user found with id " + user.getId());
+                if (rowsUpdated == 0) {
+                    throw new RuntimeException("Error updating user: no user found with id " + user.getId());
+                }
+
+                return user;
             }
-
-            return user;
 
         } catch (SQLException e) {
             throw new RuntimeException("Error updating user", e);
         } finally {
-            try {
-                if (statement != null) {
-                    statement.close();
-                }
-            } catch (SQLException e) {
-                throw new RuntimeException("Error closing statement", e);
-            }
             releaseConnection(connection);
         }
     }
@@ -185,25 +143,18 @@ public class UserDAO extends AbstractMySQLDAO implements IUserDAO {
     @Override
     public boolean deleteById(Long id) {
         Connection connection = null;
-        PreparedStatement statement = null;
 
         try {
             connection = getConnection();
-            statement = connection.prepareStatement(DELETE_BY_ID);
-            statement.setLong(1, id);
 
-            return statement.executeUpdate() > 0;
+            try (PreparedStatement statement = connection.prepareStatement(DELETE_BY_ID)) {
+                statement.setLong(1, id);
+                return statement.executeUpdate() > 0;
+            }
 
         } catch (SQLException e) {
             throw new RuntimeException("Error deleting user", e);
         } finally {
-            try {
-                if (statement != null) {
-                    statement.close();
-                }
-            } catch (SQLException e) {
-                throw new RuntimeException("Error closing statement", e);
-            }
             releaseConnection(connection);
         }
     }
@@ -211,18 +162,18 @@ public class UserDAO extends AbstractMySQLDAO implements IUserDAO {
     @Override
     public Optional<User> getByEmail(String email) {
         Connection connection = null;
-        PreparedStatement statement = null;
-        ResultSet rs = null;
 
         try {
             connection = getConnection();
-            statement = connection.prepareStatement(GET_BY_EMAIL);
-            statement.setString(1, email);
 
-            rs = statement.executeQuery();
+            try (PreparedStatement statement = connection.prepareStatement(GET_BY_EMAIL)) {
+                statement.setString(1, email);
 
-            if (rs.next()) {
-                return Optional.of(mapRow(rs));
+                try (ResultSet rs = statement.executeQuery()) {
+                    if (rs.next()) {
+                        return Optional.of(mapRow(rs));
+                    }
+                }
             }
 
             return Optional.empty();
@@ -230,16 +181,6 @@ public class UserDAO extends AbstractMySQLDAO implements IUserDAO {
         } catch (SQLException e) {
             throw new RuntimeException("Error getting user by email", e);
         } finally {
-            try {
-                if (rs != null) {
-                    rs.close();
-                }
-                if (statement != null) {
-                    statement.close();
-                }
-            } catch (SQLException e) {
-                throw new RuntimeException("Error closing resources", e);
-            }
             releaseConnection(connection);
         }
     }

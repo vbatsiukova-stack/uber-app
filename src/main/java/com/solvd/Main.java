@@ -1,19 +1,22 @@
 package com.solvd;
 
-import com.solvd.dao.UserXmlDAO;
+import com.solvd.dao.UserDAO;
 import com.solvd.model.User;
 import com.solvd.service.UserService;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
 
 public class Main {
+
+    private static final Logger LOGGER = LogManager.getLogger(Main.class);
+
     public static void main(String[] args) {
 
-        // теперь используем XML DAO
-        UserService userService = new UserService(new UserXmlDAO());
+        UserService userService = new UserService(new UserDAO());
 
-        // CREATE
         User user = new User();
         user.setFirstName("Anna");
         user.setLastName("Smith");
@@ -22,24 +25,21 @@ public class Main {
         user.setCreatedAt(LocalDateTime.now());
 
         User createdUser = userService.create(user);
-        System.out.println("Created: " + createdUser);
+        LOGGER.info("Created: {}", createdUser);
 
-        // READ ALL
-        System.out.println("All users:");
-        System.out.println(userService.getAll());
+        LOGGER.info("All users:");
+        LOGGER.info("{}", userService.getAll());
 
-        // READ BY ID
-        Optional<User> foundUser = userService.getById((long) createdUser.getId());
-        System.out.println("Found by id: " + foundUser);
+        Optional<User> foundUser = userService.getById(createdUser.getId());
+        LOGGER.info("Found by id: {}", foundUser);
 
-        // UPDATE
         createdUser.setFirstName("AnnaUpdated");
-        createdUser.setEmail("anna.updated@mail.com");
-        User updatedUser = userService.update(createdUser);
-        System.out.println("Updated: " + updatedUser);
+        createdUser.setEmail("anna.updated" + System.currentTimeMillis() + "@mail.com");
 
-        // DELETE
-        boolean deleted = userService.deleteById((long) updatedUser.getId());
-        System.out.println("Deleted: " + deleted);
+        User updatedUser = userService.update(createdUser);
+        LOGGER.info("Updated: {}", updatedUser);
+
+        boolean deleted = userService.deleteById(updatedUser.getId());
+        LOGGER.info("Deleted: {}", deleted);
     }
 }

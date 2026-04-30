@@ -2,11 +2,7 @@ package com.solvd.dao;
 
 import com.solvd.model.FareType;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Types;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -25,34 +21,33 @@ public class FareTypeDAO extends AbstractMySQLDAO implements IBaseDAO<FareType> 
 
         try {
             connection = getConnection();
-            PreparedStatement st = connection.prepareStatement(INSERT);
 
-            st.setString(1, fareType.getName());
+            try (PreparedStatement st = connection.prepareStatement(INSERT)) {
+                st.setString(1, fareType.getName());
 
-            if (fareType.getBasePrice() != null) {
-                st.setBigDecimal(2, fareType.getBasePrice());
-            } else {
-                st.setNull(2, Types.DECIMAL);
+                if (fareType.getBasePrice() != null) {
+                    st.setBigDecimal(2, fareType.getBasePrice());
+                } else {
+                    st.setNull(2, Types.DECIMAL);
+                }
+
+                if (fareType.getPricePerKm() != null) {
+                    st.setBigDecimal(3, fareType.getPricePerKm());
+                } else {
+                    st.setNull(3, Types.DECIMAL);
+                }
+
+                if (fareType.getPricePerMinute() != null) {
+                    st.setBigDecimal(4, fareType.getPricePerMinute());
+                } else {
+                    st.setNull(4, Types.DECIMAL);
+                }
+
+                st.setString(5, fareType.getDescription());
+
+                st.executeUpdate();
+                return fareType;
             }
-
-            if (fareType.getPricePerKm() != null) {
-                st.setBigDecimal(3, fareType.getPricePerKm());
-            } else {
-                st.setNull(3, Types.DECIMAL);
-            }
-
-            if (fareType.getPricePerMinute() != null) {
-                st.setBigDecimal(4, fareType.getPricePerMinute());
-            } else {
-                st.setNull(4, Types.DECIMAL);
-            }
-
-            st.setString(5, fareType.getDescription());
-
-            st.executeUpdate();
-            st.close();
-
-            return fareType;
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -67,20 +62,17 @@ public class FareTypeDAO extends AbstractMySQLDAO implements IBaseDAO<FareType> 
 
         try {
             connection = getConnection();
-            PreparedStatement st = connection.prepareStatement(GET_BY_ID);
-            st.setLong(1, id);
 
-            ResultSet rs = st.executeQuery();
+            try (PreparedStatement st = connection.prepareStatement(GET_BY_ID)) {
+                st.setLong(1, id);
 
-            if (rs.next()) {
-                FareType fareType = mapRow(rs);
-                rs.close();
-                st.close();
-                return Optional.of(fareType);
+                try (ResultSet rs = st.executeQuery()) {
+                    if (rs.next()) {
+                        return Optional.of(mapRow(rs));
+                    }
+                }
             }
 
-            rs.close();
-            st.close();
             return Optional.empty();
 
         } catch (SQLException e) {
@@ -97,22 +89,22 @@ public class FareTypeDAO extends AbstractMySQLDAO implements IBaseDAO<FareType> 
 
         try {
             connection = getConnection();
-            PreparedStatement st = connection.prepareStatement(GET_ALL);
-            ResultSet rs = st.executeQuery();
 
-            while (rs.next()) {
-                list.add(mapRow(rs));
+            try (PreparedStatement st = connection.prepareStatement(GET_ALL);
+                 ResultSet rs = st.executeQuery()) {
+
+                while (rs.next()) {
+                    list.add(mapRow(rs));
+                }
             }
-
-            rs.close();
-            st.close();
-            return list;
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
         } finally {
             releaseConnection(connection);
         }
+
+        return list;
     }
 
     @Override
@@ -121,35 +113,34 @@ public class FareTypeDAO extends AbstractMySQLDAO implements IBaseDAO<FareType> 
 
         try {
             connection = getConnection();
-            PreparedStatement st = connection.prepareStatement(UPDATE);
 
-            st.setString(1, fareType.getName());
+            try (PreparedStatement st = connection.prepareStatement(UPDATE)) {
+                st.setString(1, fareType.getName());
 
-            if (fareType.getBasePrice() != null) {
-                st.setBigDecimal(2, fareType.getBasePrice());
-            } else {
-                st.setNull(2, Types.DECIMAL);
+                if (fareType.getBasePrice() != null) {
+                    st.setBigDecimal(2, fareType.getBasePrice());
+                } else {
+                    st.setNull(2, Types.DECIMAL);
+                }
+
+                if (fareType.getPricePerKm() != null) {
+                    st.setBigDecimal(3, fareType.getPricePerKm());
+                } else {
+                    st.setNull(3, Types.DECIMAL);
+                }
+
+                if (fareType.getPricePerMinute() != null) {
+                    st.setBigDecimal(4, fareType.getPricePerMinute());
+                } else {
+                    st.setNull(4, Types.DECIMAL);
+                }
+
+                st.setString(5, fareType.getDescription());
+                st.setInt(6, fareType.getId());
+
+                st.executeUpdate();
+                return fareType;
             }
-
-            if (fareType.getPricePerKm() != null) {
-                st.setBigDecimal(3, fareType.getPricePerKm());
-            } else {
-                st.setNull(3, Types.DECIMAL);
-            }
-
-            if (fareType.getPricePerMinute() != null) {
-                st.setBigDecimal(4, fareType.getPricePerMinute());
-            } else {
-                st.setNull(4, Types.DECIMAL);
-            }
-
-            st.setString(5, fareType.getDescription());
-            st.setInt(6, fareType.getId());
-
-            st.executeUpdate();
-            st.close();
-
-            return fareType;
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -164,13 +155,11 @@ public class FareTypeDAO extends AbstractMySQLDAO implements IBaseDAO<FareType> 
 
         try {
             connection = getConnection();
-            PreparedStatement st = connection.prepareStatement(DELETE);
-            st.setLong(1, id);
 
-            boolean deleted = st.executeUpdate() > 0;
-            st.close();
-
-            return deleted;
+            try (PreparedStatement st = connection.prepareStatement(DELETE)) {
+                st.setLong(1, id);
+                return st.executeUpdate() > 0;
+            }
 
         } catch (SQLException e) {
             throw new RuntimeException(e);

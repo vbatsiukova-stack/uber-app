@@ -2,12 +2,7 @@ package com.solvd.dao;
 
 import com.solvd.model.Payment;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.sql.Types;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -26,29 +21,29 @@ public class PaymentDAO extends AbstractMySQLDAO implements IBaseDAO<Payment> {
 
         try {
             connection = getConnection();
-            PreparedStatement st = connection.prepareStatement(INSERT);
 
-            st.setInt(1, payment.getTripId());
-            st.setString(2, payment.getPaymentMethod());
+            try (PreparedStatement st = connection.prepareStatement(INSERT)) {
 
-            if (payment.getAmount() != null) {
-                st.setBigDecimal(3, payment.getAmount());
-            } else {
-                st.setNull(3, Types.DECIMAL);
+                st.setInt(1, payment.getTripId());
+                st.setString(2, payment.getPaymentMethod());
+
+                if (payment.getAmount() != null) {
+                    st.setBigDecimal(3, payment.getAmount());
+                } else {
+                    st.setNull(3, Types.DECIMAL);
+                }
+
+                st.setString(4, payment.getPaymentStatus());
+
+                if (payment.getPaidAt() != null) {
+                    st.setTimestamp(5, Timestamp.valueOf(payment.getPaidAt()));
+                } else {
+                    st.setNull(5, Types.TIMESTAMP);
+                }
+
+                st.executeUpdate();
+                return payment;
             }
-
-            st.setString(4, payment.getPaymentStatus());
-
-            if (payment.getPaidAt() != null) {
-                st.setTimestamp(5, Timestamp.valueOf(payment.getPaidAt()));
-            } else {
-                st.setNull(5, Types.TIMESTAMP);
-            }
-
-            st.executeUpdate();
-            st.close();
-
-            return payment;
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -63,20 +58,17 @@ public class PaymentDAO extends AbstractMySQLDAO implements IBaseDAO<Payment> {
 
         try {
             connection = getConnection();
-            PreparedStatement st = connection.prepareStatement(GET_BY_ID);
-            st.setLong(1, id);
 
-            ResultSet rs = st.executeQuery();
+            try (PreparedStatement st = connection.prepareStatement(GET_BY_ID)) {
+                st.setLong(1, id);
 
-            if (rs.next()) {
-                Payment payment = mapRow(rs);
-                rs.close();
-                st.close();
-                return Optional.of(payment);
+                try (ResultSet rs = st.executeQuery()) {
+                    if (rs.next()) {
+                        return Optional.of(mapRow(rs));
+                    }
+                }
             }
 
-            rs.close();
-            st.close();
             return Optional.empty();
 
         } catch (SQLException e) {
@@ -93,22 +85,22 @@ public class PaymentDAO extends AbstractMySQLDAO implements IBaseDAO<Payment> {
 
         try {
             connection = getConnection();
-            PreparedStatement st = connection.prepareStatement(GET_ALL);
-            ResultSet rs = st.executeQuery();
 
-            while (rs.next()) {
-                list.add(mapRow(rs));
+            try (PreparedStatement st = connection.prepareStatement(GET_ALL);
+                 ResultSet rs = st.executeQuery()) {
+
+                while (rs.next()) {
+                    list.add(mapRow(rs));
+                }
             }
-
-            rs.close();
-            st.close();
-            return list;
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
         } finally {
             releaseConnection(connection);
         }
+
+        return list;
     }
 
     @Override
@@ -117,31 +109,31 @@ public class PaymentDAO extends AbstractMySQLDAO implements IBaseDAO<Payment> {
 
         try {
             connection = getConnection();
-            PreparedStatement st = connection.prepareStatement(UPDATE);
 
-            st.setInt(1, payment.getTripId());
-            st.setString(2, payment.getPaymentMethod());
+            try (PreparedStatement st = connection.prepareStatement(UPDATE)) {
 
-            if (payment.getAmount() != null) {
-                st.setBigDecimal(3, payment.getAmount());
-            } else {
-                st.setNull(3, Types.DECIMAL);
+                st.setInt(1, payment.getTripId());
+                st.setString(2, payment.getPaymentMethod());
+
+                if (payment.getAmount() != null) {
+                    st.setBigDecimal(3, payment.getAmount());
+                } else {
+                    st.setNull(3, Types.DECIMAL);
+                }
+
+                st.setString(4, payment.getPaymentStatus());
+
+                if (payment.getPaidAt() != null) {
+                    st.setTimestamp(5, Timestamp.valueOf(payment.getPaidAt()));
+                } else {
+                    st.setNull(5, Types.TIMESTAMP);
+                }
+
+                st.setInt(6, payment.getId());
+
+                st.executeUpdate();
+                return payment;
             }
-
-            st.setString(4, payment.getPaymentStatus());
-
-            if (payment.getPaidAt() != null) {
-                st.setTimestamp(5, Timestamp.valueOf(payment.getPaidAt()));
-            } else {
-                st.setNull(5, Types.TIMESTAMP);
-            }
-
-            st.setInt(6, payment.getId());
-
-            st.executeUpdate();
-            st.close();
-
-            return payment;
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -156,13 +148,11 @@ public class PaymentDAO extends AbstractMySQLDAO implements IBaseDAO<Payment> {
 
         try {
             connection = getConnection();
-            PreparedStatement st = connection.prepareStatement(DELETE);
-            st.setLong(1, id);
 
-            boolean deleted = st.executeUpdate() > 0;
-            st.close();
-
-            return deleted;
+            try (PreparedStatement st = connection.prepareStatement(DELETE)) {
+                st.setLong(1, id);
+                return st.executeUpdate() > 0;
+            }
 
         } catch (SQLException e) {
             throw new RuntimeException(e);

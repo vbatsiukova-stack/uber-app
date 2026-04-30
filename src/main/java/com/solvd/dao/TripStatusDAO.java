@@ -2,12 +2,7 @@ package com.solvd.dao;
 
 import com.solvd.model.TripStatus;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.sql.Types;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -26,21 +21,20 @@ public class TripStatusDAO extends AbstractMySQLDAO implements IBaseDAO<TripStat
 
         try {
             connection = getConnection();
-            PreparedStatement st = connection.prepareStatement(INSERT);
 
-            st.setString(1, tripStatus.getStatusName());
-            st.setString(2, tripStatus.getDescription());
+            try (PreparedStatement st = connection.prepareStatement(INSERT)) {
+                st.setString(1, tripStatus.getStatusName());
+                st.setString(2, tripStatus.getDescription());
 
-            if (tripStatus.getCreatedAt() != null) {
-                st.setTimestamp(3, Timestamp.valueOf(tripStatus.getCreatedAt()));
-            } else {
-                st.setNull(3, Types.TIMESTAMP);
+                if (tripStatus.getCreatedAt() != null) {
+                    st.setTimestamp(3, Timestamp.valueOf(tripStatus.getCreatedAt()));
+                } else {
+                    st.setNull(3, Types.TIMESTAMP);
+                }
+
+                st.executeUpdate();
+                return tripStatus;
             }
-
-            st.executeUpdate();
-            st.close();
-
-            return tripStatus;
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -55,20 +49,17 @@ public class TripStatusDAO extends AbstractMySQLDAO implements IBaseDAO<TripStat
 
         try {
             connection = getConnection();
-            PreparedStatement st = connection.prepareStatement(GET_BY_ID);
-            st.setLong(1, id);
 
-            ResultSet rs = st.executeQuery();
+            try (PreparedStatement st = connection.prepareStatement(GET_BY_ID)) {
+                st.setLong(1, id);
 
-            if (rs.next()) {
-                TripStatus tripStatus = mapRow(rs);
-                rs.close();
-                st.close();
-                return Optional.of(tripStatus);
+                try (ResultSet rs = st.executeQuery()) {
+                    if (rs.next()) {
+                        return Optional.of(mapRow(rs));
+                    }
+                }
             }
 
-            rs.close();
-            st.close();
             return Optional.empty();
 
         } catch (SQLException e) {
@@ -85,22 +76,22 @@ public class TripStatusDAO extends AbstractMySQLDAO implements IBaseDAO<TripStat
 
         try {
             connection = getConnection();
-            PreparedStatement st = connection.prepareStatement(GET_ALL);
-            ResultSet rs = st.executeQuery();
 
-            while (rs.next()) {
-                list.add(mapRow(rs));
+            try (PreparedStatement st = connection.prepareStatement(GET_ALL);
+                 ResultSet rs = st.executeQuery()) {
+
+                while (rs.next()) {
+                    list.add(mapRow(rs));
+                }
             }
-
-            rs.close();
-            st.close();
-            return list;
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
         } finally {
             releaseConnection(connection);
         }
+
+        return list;
     }
 
     @Override
@@ -109,23 +100,22 @@ public class TripStatusDAO extends AbstractMySQLDAO implements IBaseDAO<TripStat
 
         try {
             connection = getConnection();
-            PreparedStatement st = connection.prepareStatement(UPDATE);
 
-            st.setString(1, tripStatus.getStatusName());
-            st.setString(2, tripStatus.getDescription());
+            try (PreparedStatement st = connection.prepareStatement(UPDATE)) {
+                st.setString(1, tripStatus.getStatusName());
+                st.setString(2, tripStatus.getDescription());
 
-            if (tripStatus.getCreatedAt() != null) {
-                st.setTimestamp(3, Timestamp.valueOf(tripStatus.getCreatedAt()));
-            } else {
-                st.setNull(3, Types.TIMESTAMP);
+                if (tripStatus.getCreatedAt() != null) {
+                    st.setTimestamp(3, Timestamp.valueOf(tripStatus.getCreatedAt()));
+                } else {
+                    st.setNull(3, Types.TIMESTAMP);
+                }
+
+                st.setInt(4, tripStatus.getId());
+
+                st.executeUpdate();
+                return tripStatus;
             }
-
-            st.setInt(4, tripStatus.getId());
-
-            st.executeUpdate();
-            st.close();
-
-            return tripStatus;
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -140,13 +130,11 @@ public class TripStatusDAO extends AbstractMySQLDAO implements IBaseDAO<TripStat
 
         try {
             connection = getConnection();
-            PreparedStatement st = connection.prepareStatement(DELETE);
-            st.setLong(1, id);
 
-            boolean deleted = st.executeUpdate() > 0;
-            st.close();
-
-            return deleted;
+            try (PreparedStatement st = connection.prepareStatement(DELETE)) {
+                st.setLong(1, id);
+                return st.executeUpdate() > 0;
+            }
 
         } catch (SQLException e) {
             throw new RuntimeException(e);

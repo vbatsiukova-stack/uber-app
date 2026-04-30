@@ -22,7 +22,7 @@ public class ConnectionPool {
             Class.forName("com.mysql.cj.jdbc.Driver");
 
             for (int i = 0; i < POOL_SIZE; i++) {
-                pool.add(createConnection());
+                pool.offer(createConnection());
             }
 
         } catch (Exception e) {
@@ -42,15 +42,24 @@ public class ConnectionPool {
     }
 
     public synchronized Connection getConnection() throws SQLException {
-        if (pool.isEmpty()) {
-            return createConnection(); // fallback
+        while (!pool.isEmpty()) {
+            Connection connection = pool.poll();
+
+            if (connection != null && !connection.isClosed()) {
+                return connection;
+            }
         }
-        return pool.poll();
+
+        return createConnection();
     }
 
     public synchronized void releaseConnection(Connection connection) {
-        if (connection != null) {
-            pool.offer(connection);
+        try {
+            if (connection != null && !connection.isClosed()) {
+                pool.offer(connection);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error releasing connection", e);
         }
     }
 }

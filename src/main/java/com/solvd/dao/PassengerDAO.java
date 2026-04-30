@@ -2,10 +2,7 @@ package com.solvd.dao;
 
 import com.solvd.model.Passenger;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -24,17 +21,16 @@ public class PassengerDAO extends AbstractMySQLDAO implements IBaseDAO<Passenger
 
         try {
             connection = getConnection();
-            PreparedStatement st = connection.prepareStatement(INSERT);
 
-            st.setDouble(1, passenger.getRating());
-            st.setInt(2, passenger.getBonusPoints());
-            st.setString(3, passenger.getDefaultPaymentMethod());
-            st.setInt(4, passenger.getUserId());
+            try (PreparedStatement st = connection.prepareStatement(INSERT)) {
+                st.setDouble(1, passenger.getRating());
+                st.setInt(2, passenger.getBonusPoints());
+                st.setString(3, passenger.getDefaultPaymentMethod());
+                st.setInt(4, passenger.getUserId());
 
-            st.executeUpdate();
-            st.close();
-
-            return passenger;
+                st.executeUpdate();
+                return passenger;
+            }
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -49,20 +45,17 @@ public class PassengerDAO extends AbstractMySQLDAO implements IBaseDAO<Passenger
 
         try {
             connection = getConnection();
-            PreparedStatement st = connection.prepareStatement(GET_BY_ID);
-            st.setLong(1, id);
 
-            ResultSet rs = st.executeQuery();
+            try (PreparedStatement st = connection.prepareStatement(GET_BY_ID)) {
+                st.setLong(1, id);
 
-            if (rs.next()) {
-                Passenger p = mapRow(rs);
-                rs.close();
-                st.close();
-                return Optional.of(p);
+                try (ResultSet rs = st.executeQuery()) {
+                    if (rs.next()) {
+                        return Optional.of(mapRow(rs));
+                    }
+                }
             }
 
-            rs.close();
-            st.close();
             return Optional.empty();
 
         } catch (SQLException e) {
@@ -79,22 +72,22 @@ public class PassengerDAO extends AbstractMySQLDAO implements IBaseDAO<Passenger
 
         try {
             connection = getConnection();
-            PreparedStatement st = connection.prepareStatement(GET_ALL);
-            ResultSet rs = st.executeQuery();
 
-            while (rs.next()) {
-                list.add(mapRow(rs));
+            try (PreparedStatement st = connection.prepareStatement(GET_ALL);
+                 ResultSet rs = st.executeQuery()) {
+
+                while (rs.next()) {
+                    list.add(mapRow(rs));
+                }
             }
-
-            rs.close();
-            st.close();
-            return list;
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
         } finally {
             releaseConnection(connection);
         }
+
+        return list;
     }
 
     @Override
@@ -103,18 +96,17 @@ public class PassengerDAO extends AbstractMySQLDAO implements IBaseDAO<Passenger
 
         try {
             connection = getConnection();
-            PreparedStatement st = connection.prepareStatement(UPDATE);
 
-            st.setDouble(1, passenger.getRating());
-            st.setInt(2, passenger.getBonusPoints());
-            st.setString(3, passenger.getDefaultPaymentMethod());
-            st.setInt(4, passenger.getUserId());
-            st.setInt(5, passenger.getId());
+            try (PreparedStatement st = connection.prepareStatement(UPDATE)) {
+                st.setDouble(1, passenger.getRating());
+                st.setInt(2, passenger.getBonusPoints());
+                st.setString(3, passenger.getDefaultPaymentMethod());
+                st.setInt(4, passenger.getUserId());
+                st.setInt(5, passenger.getId());
 
-            st.executeUpdate();
-            st.close();
-
-            return passenger;
+                st.executeUpdate();
+                return passenger;
+            }
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -129,13 +121,11 @@ public class PassengerDAO extends AbstractMySQLDAO implements IBaseDAO<Passenger
 
         try {
             connection = getConnection();
-            PreparedStatement st = connection.prepareStatement(DELETE);
-            st.setLong(1, id);
 
-            boolean deleted = st.executeUpdate() > 0;
-            st.close();
-
-            return deleted;
+            try (PreparedStatement st = connection.prepareStatement(DELETE)) {
+                st.setLong(1, id);
+                return st.executeUpdate() > 0;
+            }
 
         } catch (SQLException e) {
             throw new RuntimeException(e);

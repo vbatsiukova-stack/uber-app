@@ -3,12 +3,7 @@ package com.solvd.dao;
 import com.solvd.model.Trip;
 
 import java.math.BigDecimal;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.sql.Types;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -27,46 +22,45 @@ public class TripDAO extends AbstractMySQLDAO implements IBaseDAO<Trip> {
 
         try {
             connection = getConnection();
-            PreparedStatement st = connection.prepareStatement(INSERT);
 
-            st.setInt(1, trip.getPassengerId());
-            st.setInt(2, trip.getDriverId());
-            st.setInt(3, trip.getCarId());
-            st.setInt(4, trip.getStatusId());
-            st.setString(5, trip.getPickupAddress());
-            st.setString(6, trip.getDropoffAddress());
+            try (PreparedStatement st = connection.prepareStatement(INSERT)) {
+                st.setInt(1, trip.getPassengerId());
+                st.setInt(2, trip.getDriverId());
+                st.setInt(3, trip.getCarId());
+                st.setInt(4, trip.getStatusId());
+                st.setString(5, trip.getPickupAddress());
+                st.setString(6, trip.getDropoffAddress());
 
-            if (trip.getRequestedAt() != null) {
-                st.setTimestamp(7, Timestamp.valueOf(trip.getRequestedAt()));
-            } else {
-                st.setNull(7, Types.TIMESTAMP);
+                if (trip.getRequestedAt() != null) {
+                    st.setTimestamp(7, Timestamp.valueOf(trip.getRequestedAt()));
+                } else {
+                    st.setNull(7, Types.TIMESTAMP);
+                }
+
+                if (trip.getCompletedAt() != null) {
+                    st.setTimestamp(8, Timestamp.valueOf(trip.getCompletedAt()));
+                } else {
+                    st.setNull(8, Types.TIMESTAMP);
+                }
+
+                BigDecimal price = trip.getPrice();
+                if (price != null) {
+                    st.setBigDecimal(9, price);
+                } else {
+                    st.setNull(9, Types.DECIMAL);
+                }
+
+                st.setInt(10, trip.getFareTypeId());
+
+                if (trip.getPromocodeId() != null) {
+                    st.setInt(11, trip.getPromocodeId());
+                } else {
+                    st.setNull(11, Types.INTEGER);
+                }
+
+                st.executeUpdate();
+                return trip;
             }
-
-            if (trip.getCompletedAt() != null) {
-                st.setTimestamp(8, Timestamp.valueOf(trip.getCompletedAt()));
-            } else {
-                st.setNull(8, Types.TIMESTAMP);
-            }
-
-            BigDecimal price = trip.getPrice();
-            if (price != null) {
-                st.setBigDecimal(9, price);
-            } else {
-                st.setNull(9, Types.DECIMAL);
-            }
-
-            st.setInt(10, trip.getFareTypeId());
-
-            if (trip.getPromocodeId() != null) {
-                st.setInt(11, trip.getPromocodeId());
-            } else {
-                st.setNull(11, Types.INTEGER);
-            }
-
-            st.executeUpdate();
-            st.close();
-
-            return trip;
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -81,20 +75,17 @@ public class TripDAO extends AbstractMySQLDAO implements IBaseDAO<Trip> {
 
         try {
             connection = getConnection();
-            PreparedStatement st = connection.prepareStatement(GET_BY_ID);
-            st.setLong(1, id);
 
-            ResultSet rs = st.executeQuery();
+            try (PreparedStatement st = connection.prepareStatement(GET_BY_ID)) {
+                st.setLong(1, id);
 
-            if (rs.next()) {
-                Trip trip = mapRow(rs);
-                rs.close();
-                st.close();
-                return Optional.of(trip);
+                try (ResultSet rs = st.executeQuery()) {
+                    if (rs.next()) {
+                        return Optional.of(mapRow(rs));
+                    }
+                }
             }
 
-            rs.close();
-            st.close();
             return Optional.empty();
 
         } catch (SQLException e) {
@@ -111,22 +102,22 @@ public class TripDAO extends AbstractMySQLDAO implements IBaseDAO<Trip> {
 
         try {
             connection = getConnection();
-            PreparedStatement st = connection.prepareStatement(GET_ALL);
-            ResultSet rs = st.executeQuery();
 
-            while (rs.next()) {
-                list.add(mapRow(rs));
+            try (PreparedStatement st = connection.prepareStatement(GET_ALL);
+                 ResultSet rs = st.executeQuery()) {
+
+                while (rs.next()) {
+                    list.add(mapRow(rs));
+                }
             }
-
-            rs.close();
-            st.close();
-            return list;
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
         } finally {
             releaseConnection(connection);
         }
+
+        return list;
     }
 
     @Override
@@ -135,48 +126,47 @@ public class TripDAO extends AbstractMySQLDAO implements IBaseDAO<Trip> {
 
         try {
             connection = getConnection();
-            PreparedStatement st = connection.prepareStatement(UPDATE);
 
-            st.setInt(1, trip.getPassengerId());
-            st.setInt(2, trip.getDriverId());
-            st.setInt(3, trip.getCarId());
-            st.setInt(4, trip.getStatusId());
-            st.setString(5, trip.getPickupAddress());
-            st.setString(6, trip.getDropoffAddress());
+            try (PreparedStatement st = connection.prepareStatement(UPDATE)) {
+                st.setInt(1, trip.getPassengerId());
+                st.setInt(2, trip.getDriverId());
+                st.setInt(3, trip.getCarId());
+                st.setInt(4, trip.getStatusId());
+                st.setString(5, trip.getPickupAddress());
+                st.setString(6, trip.getDropoffAddress());
 
-            if (trip.getRequestedAt() != null) {
-                st.setTimestamp(7, Timestamp.valueOf(trip.getRequestedAt()));
-            } else {
-                st.setNull(7, Types.TIMESTAMP);
+                if (trip.getRequestedAt() != null) {
+                    st.setTimestamp(7, Timestamp.valueOf(trip.getRequestedAt()));
+                } else {
+                    st.setNull(7, Types.TIMESTAMP);
+                }
+
+                if (trip.getCompletedAt() != null) {
+                    st.setTimestamp(8, Timestamp.valueOf(trip.getCompletedAt()));
+                } else {
+                    st.setNull(8, Types.TIMESTAMP);
+                }
+
+                BigDecimal price = trip.getPrice();
+                if (price != null) {
+                    st.setBigDecimal(9, price);
+                } else {
+                    st.setNull(9, Types.DECIMAL);
+                }
+
+                st.setInt(10, trip.getFareTypeId());
+
+                if (trip.getPromocodeId() != null) {
+                    st.setInt(11, trip.getPromocodeId());
+                } else {
+                    st.setNull(11, Types.INTEGER);
+                }
+
+                st.setInt(12, trip.getId());
+
+                st.executeUpdate();
+                return trip;
             }
-
-            if (trip.getCompletedAt() != null) {
-                st.setTimestamp(8, Timestamp.valueOf(trip.getCompletedAt()));
-            } else {
-                st.setNull(8, Types.TIMESTAMP);
-            }
-
-            BigDecimal price = trip.getPrice();
-            if (price != null) {
-                st.setBigDecimal(9, price);
-            } else {
-                st.setNull(9, Types.DECIMAL);
-            }
-
-            st.setInt(10, trip.getFareTypeId());
-
-            if (trip.getPromocodeId() != null) {
-                st.setInt(11, trip.getPromocodeId());
-            } else {
-                st.setNull(11, Types.INTEGER);
-            }
-
-            st.setInt(12, trip.getId());
-
-            st.executeUpdate();
-            st.close();
-
-            return trip;
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -191,13 +181,11 @@ public class TripDAO extends AbstractMySQLDAO implements IBaseDAO<Trip> {
 
         try {
             connection = getConnection();
-            PreparedStatement st = connection.prepareStatement(DELETE);
-            st.setLong(1, id);
 
-            boolean deleted = st.executeUpdate() > 0;
-            st.close();
-
-            return deleted;
+            try (PreparedStatement st = connection.prepareStatement(DELETE)) {
+                st.setLong(1, id);
+                return st.executeUpdate() > 0;
+            }
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -238,3 +226,4 @@ public class TripDAO extends AbstractMySQLDAO implements IBaseDAO<Trip> {
         return trip;
     }
 }
+

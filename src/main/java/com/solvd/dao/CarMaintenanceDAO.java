@@ -2,12 +2,7 @@ package com.solvd.dao;
 
 import com.solvd.model.CarMaintenance;
 
-import java.sql.Connection;
-import java.sql.Date;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Types;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -26,29 +21,28 @@ public class CarMaintenanceDAO extends AbstractMySQLDAO implements IBaseDAO<CarM
 
         try {
             connection = getConnection();
-            PreparedStatement st = connection.prepareStatement(INSERT);
 
-            st.setInt(1, maintenance.getCarId());
-            st.setString(2, maintenance.getServiceType());
+            try (PreparedStatement st = connection.prepareStatement(INSERT)) {
+                st.setInt(1, maintenance.getCarId());
+                st.setString(2, maintenance.getServiceType());
 
-            if (maintenance.getServiceDate() != null) {
-                st.setDate(3, Date.valueOf(maintenance.getServiceDate()));
-            } else {
-                st.setNull(3, Types.DATE);
+                if (maintenance.getServiceDate() != null) {
+                    st.setDate(3, Date.valueOf(maintenance.getServiceDate()));
+                } else {
+                    st.setNull(3, Types.DATE);
+                }
+
+                if (maintenance.getCost() != null) {
+                    st.setBigDecimal(4, maintenance.getCost());
+                } else {
+                    st.setNull(4, Types.DECIMAL);
+                }
+
+                st.setString(5, maintenance.getNotes());
+
+                st.executeUpdate();
+                return maintenance;
             }
-
-            if (maintenance.getCost() != null) {
-                st.setBigDecimal(4, maintenance.getCost());
-            } else {
-                st.setNull(4, Types.DECIMAL);
-            }
-
-            st.setString(5, maintenance.getNotes());
-
-            st.executeUpdate();
-            st.close();
-
-            return maintenance;
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -63,20 +57,17 @@ public class CarMaintenanceDAO extends AbstractMySQLDAO implements IBaseDAO<CarM
 
         try {
             connection = getConnection();
-            PreparedStatement st = connection.prepareStatement(GET_BY_ID);
-            st.setLong(1, id);
 
-            ResultSet rs = st.executeQuery();
+            try (PreparedStatement st = connection.prepareStatement(GET_BY_ID)) {
+                st.setLong(1, id);
 
-            if (rs.next()) {
-                CarMaintenance maintenance = mapRow(rs);
-                rs.close();
-                st.close();
-                return Optional.of(maintenance);
+                try (ResultSet rs = st.executeQuery()) {
+                    if (rs.next()) {
+                        return Optional.of(mapRow(rs));
+                    }
+                }
             }
 
-            rs.close();
-            st.close();
             return Optional.empty();
 
         } catch (SQLException e) {
@@ -93,22 +84,22 @@ public class CarMaintenanceDAO extends AbstractMySQLDAO implements IBaseDAO<CarM
 
         try {
             connection = getConnection();
-            PreparedStatement st = connection.prepareStatement(GET_ALL);
-            ResultSet rs = st.executeQuery();
 
-            while (rs.next()) {
-                list.add(mapRow(rs));
+            try (PreparedStatement st = connection.prepareStatement(GET_ALL);
+                 ResultSet rs = st.executeQuery()) {
+
+                while (rs.next()) {
+                    list.add(mapRow(rs));
+                }
             }
-
-            rs.close();
-            st.close();
-            return list;
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
         } finally {
             releaseConnection(connection);
         }
+
+        return list;
     }
 
     @Override
@@ -117,30 +108,29 @@ public class CarMaintenanceDAO extends AbstractMySQLDAO implements IBaseDAO<CarM
 
         try {
             connection = getConnection();
-            PreparedStatement st = connection.prepareStatement(UPDATE);
 
-            st.setInt(1, maintenance.getCarId());
-            st.setString(2, maintenance.getServiceType());
+            try (PreparedStatement st = connection.prepareStatement(UPDATE)) {
+                st.setInt(1, maintenance.getCarId());
+                st.setString(2, maintenance.getServiceType());
 
-            if (maintenance.getServiceDate() != null) {
-                st.setDate(3, Date.valueOf(maintenance.getServiceDate()));
-            } else {
-                st.setNull(3, Types.DATE);
+                if (maintenance.getServiceDate() != null) {
+                    st.setDate(3, Date.valueOf(maintenance.getServiceDate()));
+                } else {
+                    st.setNull(3, Types.DATE);
+                }
+
+                if (maintenance.getCost() != null) {
+                    st.setBigDecimal(4, maintenance.getCost());
+                } else {
+                    st.setNull(4, Types.DECIMAL);
+                }
+
+                st.setString(5, maintenance.getNotes());
+                st.setInt(6, maintenance.getId());
+
+                st.executeUpdate();
+                return maintenance;
             }
-
-            if (maintenance.getCost() != null) {
-                st.setBigDecimal(4, maintenance.getCost());
-            } else {
-                st.setNull(4, Types.DECIMAL);
-            }
-
-            st.setString(5, maintenance.getNotes());
-            st.setInt(6, maintenance.getId());
-
-            st.executeUpdate();
-            st.close();
-
-            return maintenance;
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -155,13 +145,11 @@ public class CarMaintenanceDAO extends AbstractMySQLDAO implements IBaseDAO<CarM
 
         try {
             connection = getConnection();
-            PreparedStatement st = connection.prepareStatement(DELETE);
-            st.setLong(1, id);
 
-            boolean deleted = st.executeUpdate() > 0;
-            st.close();
-
-            return deleted;
+            try (PreparedStatement st = connection.prepareStatement(DELETE)) {
+                st.setLong(1, id);
+                return st.executeUpdate() > 0;
+            }
 
         } catch (SQLException e) {
             throw new RuntimeException(e);

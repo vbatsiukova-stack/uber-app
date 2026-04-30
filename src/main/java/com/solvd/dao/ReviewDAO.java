@@ -2,12 +2,7 @@ package com.solvd.dao;
 
 import com.solvd.model.Review;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.sql.Types;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -26,24 +21,23 @@ public class ReviewDAO extends AbstractMySQLDAO implements IBaseDAO<Review> {
 
         try {
             connection = getConnection();
-            PreparedStatement st = connection.prepareStatement(INSERT);
 
-            st.setInt(1, review.getTripId());
-            st.setInt(2, review.getPassengerId());
-            st.setInt(3, review.getDriverId());
-            st.setInt(4, review.getRating());
-            st.setString(5, review.getCommentText());
+            try (PreparedStatement st = connection.prepareStatement(INSERT)) {
+                st.setInt(1, review.getTripId());
+                st.setInt(2, review.getPassengerId());
+                st.setInt(3, review.getDriverId());
+                st.setInt(4, review.getRating());
+                st.setString(5, review.getCommentText());
 
-            if (review.getCreatedAt() != null) {
-                st.setTimestamp(6, Timestamp.valueOf(review.getCreatedAt()));
-            } else {
-                st.setNull(6, Types.TIMESTAMP);
+                if (review.getCreatedAt() != null) {
+                    st.setTimestamp(6, Timestamp.valueOf(review.getCreatedAt()));
+                } else {
+                    st.setNull(6, Types.TIMESTAMP);
+                }
+
+                st.executeUpdate();
+                return review;
             }
-
-            st.executeUpdate();
-            st.close();
-
-            return review;
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -58,20 +52,17 @@ public class ReviewDAO extends AbstractMySQLDAO implements IBaseDAO<Review> {
 
         try {
             connection = getConnection();
-            PreparedStatement st = connection.prepareStatement(GET_BY_ID);
-            st.setLong(1, id);
 
-            ResultSet rs = st.executeQuery();
+            try (PreparedStatement st = connection.prepareStatement(GET_BY_ID)) {
+                st.setLong(1, id);
 
-            if (rs.next()) {
-                Review review = mapRow(rs);
-                rs.close();
-                st.close();
-                return Optional.of(review);
+                try (ResultSet rs = st.executeQuery()) {
+                    if (rs.next()) {
+                        return Optional.of(mapRow(rs));
+                    }
+                }
             }
 
-            rs.close();
-            st.close();
             return Optional.empty();
 
         } catch (SQLException e) {
@@ -88,22 +79,22 @@ public class ReviewDAO extends AbstractMySQLDAO implements IBaseDAO<Review> {
 
         try {
             connection = getConnection();
-            PreparedStatement st = connection.prepareStatement(GET_ALL);
-            ResultSet rs = st.executeQuery();
 
-            while (rs.next()) {
-                list.add(mapRow(rs));
+            try (PreparedStatement st = connection.prepareStatement(GET_ALL);
+                 ResultSet rs = st.executeQuery()) {
+
+                while (rs.next()) {
+                    list.add(mapRow(rs));
+                }
             }
-
-            rs.close();
-            st.close();
-            return list;
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
         } finally {
             releaseConnection(connection);
         }
+
+        return list;
     }
 
     @Override
@@ -112,26 +103,25 @@ public class ReviewDAO extends AbstractMySQLDAO implements IBaseDAO<Review> {
 
         try {
             connection = getConnection();
-            PreparedStatement st = connection.prepareStatement(UPDATE);
 
-            st.setInt(1, review.getTripId());
-            st.setInt(2, review.getPassengerId());
-            st.setInt(3, review.getDriverId());
-            st.setInt(4, review.getRating());
-            st.setString(5, review.getCommentText());
+            try (PreparedStatement st = connection.prepareStatement(UPDATE)) {
+                st.setInt(1, review.getTripId());
+                st.setInt(2, review.getPassengerId());
+                st.setInt(3, review.getDriverId());
+                st.setInt(4, review.getRating());
+                st.setString(5, review.getCommentText());
 
-            if (review.getCreatedAt() != null) {
-                st.setTimestamp(6, Timestamp.valueOf(review.getCreatedAt()));
-            } else {
-                st.setNull(6, Types.TIMESTAMP);
+                if (review.getCreatedAt() != null) {
+                    st.setTimestamp(6, Timestamp.valueOf(review.getCreatedAt()));
+                } else {
+                    st.setNull(6, Types.TIMESTAMP);
+                }
+
+                st.setInt(7, review.getId());
+
+                st.executeUpdate();
+                return review;
             }
-
-            st.setInt(7, review.getId());
-
-            st.executeUpdate();
-            st.close();
-
-            return review;
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -146,13 +136,11 @@ public class ReviewDAO extends AbstractMySQLDAO implements IBaseDAO<Review> {
 
         try {
             connection = getConnection();
-            PreparedStatement st = connection.prepareStatement(DELETE);
-            st.setLong(1, id);
 
-            boolean deleted = st.executeUpdate() > 0;
-            st.close();
-
-            return deleted;
+            try (PreparedStatement st = connection.prepareStatement(DELETE)) {
+                st.setLong(1, id);
+                return st.executeUpdate() > 0;
+            }
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
