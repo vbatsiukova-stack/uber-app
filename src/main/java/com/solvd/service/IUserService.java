@@ -15,4 +15,5 @@ public interface IUserService {
     User update(User user);
 
     boolean deleteById(Long id);
+    Optional<User> getByEmail(String email);
 }

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.solvd.dao.IUserDAO">
+
+
+    <select id="getById" parameterType="long" resultType="com.solvd.model.User">
+        SELECT id, first_name AS firstName, last_name AS lastName,
+        email, phone_number AS phoneNumber, created_at AS createdAt
+        FROM users
+        WHERE id = #{id}
+    </select>
+
+
+    <select id="getAll" resultType="com.solvd.model.User">
+        SELECT id, first_name AS firstName, last_name AS lastName,
+        email, phone_number AS phoneNumber, created_at AS createdAt
+        FROM users
+    </select>
+
+
+    <insert id="create"
+            parameterType="com.solvd.model.User"
+            useGeneratedKeys="true"
+            keyProperty="id">
+        INSERT INTO users (first_name, last_name, email, phone_number, created_at)
+        VALUES (#{firstName}, #{lastName}, #{email}, #{phoneNumber}, #{createdAt})
+    </insert>
+
+
+    <update id="update" parameterType="com.solvd.model.User">
+        UPDATE users
+        SET first_name = #{firstName},
+        last_name = #{lastName},
+        email = #{email},
+        phone_number = #{phoneNumber}
+        WHERE id = #{id}
+    </update>
+
+
+    <delete id="deleteById" parameterType="long">
+        DELETE FROM users WHERE id = #{id}
+    </delete>
+    <select id="getByEmail" parameterType="string" resultType="com.solvd.model.User">
+        SELECT id, first_name AS firstName, last_name AS lastName,
+        email, phone_number AS phoneNumber, created_at AS createdAt
+        FROM users
+        WHERE email = #{email}
+    </select>
+
+</mapper>

@@ -9,6 +9,7 @@ import com.solvd.service.UserService;
 import com.solvd.xml.UserJaxbParser;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import com.solvd.dao.UserMyBatisDAO;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -64,5 +65,33 @@ public class Main {
         if (data.getUsers() != null) {
             data.getUsers().forEach(u -> LOGGER.info("JSON User: {}", u));
         }
+        // ===== MYBATIS ЧАСТЬ =====
+        LOGGER.info("===== MYBATIS DAO =====");
+
+        UserService myBatisUserService = new UserService(new UserMyBatisDAO());
+
+        User myBatisUser = new User();
+        myBatisUser.setFirstName("MyBatis");
+        myBatisUser.setLastName("User");
+        myBatisUser.setEmail("mybatis" + System.currentTimeMillis() + "@mail.com");
+        myBatisUser.setPhoneNumber("+777" + System.currentTimeMillis());
+        myBatisUser.setCreatedAt(LocalDateTime.now());
+
+        User createdMyBatisUser = myBatisUserService.create(myBatisUser);
+        LOGGER.info("MyBatis created: {}", createdMyBatisUser);
+
+        LOGGER.info("MyBatis all users:");
+        LOGGER.info("{}", myBatisUserService.getAll());
+
+        Optional<User> foundMyBatisUser = myBatisUserService.getByEmail(createdMyBatisUser.getEmail());
+        LOGGER.info("MyBatis found by email: {}", foundMyBatisUser);
+
+        createdMyBatisUser.setFirstName("MyBatisUpdated");
+
+        User updatedMyBatisUser = myBatisUserService.update(createdMyBatisUser);
+        LOGGER.info("MyBatis updated: {}", updatedMyBatisUser);
+
+        boolean deletedMyBatis = myBatisUserService.deleteById(updatedMyBatisUser.getId());
+        LOGGER.info("MyBatis deleted: {}", deletedMyBatis);
     }
 }

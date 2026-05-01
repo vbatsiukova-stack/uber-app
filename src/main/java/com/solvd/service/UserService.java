@@ -47,6 +47,14 @@ public class UserService implements IUserService {
         return userDAO.deleteById(id);
     }
 
+    @Override
+    public Optional<User> getByEmail(String email) {
+        if (email == null || email.isBlank()) {
+            throw new IllegalArgumentException("Email cannot be null or empty");
+        }
+        return userDAO.getByEmail(email);
+    }
+
     private void validateUser(User user) {
         if (user == null) {
             throw new IllegalArgumentException("User cannot be null");
