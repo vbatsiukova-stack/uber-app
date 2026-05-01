@@ -1,4 +1,4 @@
-package com.solvd;
+package com.solvd.model;
 
 import com.solvd.dao.UserDAO;
 import com.solvd.json.JacksonParser;

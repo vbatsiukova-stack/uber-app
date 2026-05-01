@@ -3,6 +3,8 @@ package com.solvd.model;
 import com.solvd.adapter.LocalDateTimeAdapter;
 import jakarta.xml.bind.annotation.*;
 import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.time.LocalDateTime;
 
@@ -18,6 +20,7 @@ public class User {
     private String phoneNumber;
 
     @XmlJavaTypeAdapter(LocalDateTimeAdapter.class)
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime createdAt;
 
     public User() {
