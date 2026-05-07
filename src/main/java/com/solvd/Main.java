@@ -22,7 +22,6 @@ public class Main {
 
         // ===== ТВОЯ СУЩЕСТВУЮЩАЯ ЛОГИКА (DOM DAO) =====
         UserService userService = new UserService(new UserDAO());
-
         User user = new User();
         user.setFirstName("Anna");
         user.setLastName("Smith");

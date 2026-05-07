@@ -5,21 +5,25 @@
 
 <mapper namespace="com.solvd.dao.IUserDAO">
 
+    <resultMap id="UserResultMap" type="com.solvd.model.User">
+        <id property="id" column="id"/>
+        <result property="firstName" column="first_name"/>
+        <result property="lastName" column="last_name"/>
+        <result property="email" column="email"/>
+        <result property="phoneNumber" column="phone_number"/>
+        <result property="createdAt" column="created_at"/>
+    </resultMap>
 
-    <select id="getById" parameterType="long" resultType="com.solvd.model.User">
-        SELECT id, first_name AS firstName, last_name AS lastName,
-        email, phone_number AS phoneNumber, created_at AS createdAt
+    <select id="getById" parameterType="long" resultMap="UserResultMap">
+        SELECT id, first_name, last_name, email, phone_number, created_at
         FROM users
         WHERE id = #{id}
     </select>
 
-
-    <select id="getAll" resultType="com.solvd.model.User">
-        SELECT id, first_name AS firstName, last_name AS lastName,
-        email, phone_number AS phoneNumber, created_at AS createdAt
+    <select id="getAll" resultMap="UserResultMap">
+        SELECT id, first_name, last_name, email, phone_number, created_at
         FROM users
     </select>
-
 
     <insert id="create"
             parameterType="com.solvd.model.User"
@@ -28,7 +32,6 @@
         INSERT INTO users (first_name, last_name, email, phone_number, created_at)
         VALUES (#{firstName}, #{lastName}, #{email}, #{phoneNumber}, #{createdAt})
     </insert>
-
 
     <update id="update" parameterType="com.solvd.model.User">
         UPDATE users
@@ -39,13 +42,12 @@
         WHERE id = #{id}
     </update>
 
-
     <delete id="deleteById" parameterType="long">
         DELETE FROM users WHERE id = #{id}
     </delete>
-    <select id="getByEmail" parameterType="string" resultType="com.solvd.model.User">
-        SELECT id, first_name AS firstName, last_name AS lastName,
-        email, phone_number AS phoneNumber, created_at AS createdAt
+
+    <select id="getByEmail" parameterType="string" resultMap="UserResultMap">
+        SELECT id, first_name, last_name, email, phone_number, created_at
         FROM users
         WHERE email = #{email}
     </select>
