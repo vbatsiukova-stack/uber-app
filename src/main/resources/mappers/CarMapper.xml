@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.solvd.dao.ICarDAO">
+
+    <resultMap id="CarResultMap" type="com.solvd.model.Car">
+        <id property="id" column="id"/>
+        <result property="driverId" column="driver_id"/>
+        <result property="brand" column="brand"/>
+        <result property="model" column="model"/>
+        <result property="color" column="color"/>
+        <result property="plateNumber" column="plate_number"/>
+        <result property="year" column="year"/>
+    </resultMap>
+
+    <select id="getAll" resultMap="CarResultMap">
+        SELECT id,
+        driver_id,
+        brand,
+        model,
+        color,
+        plate_number,
+        year
+        FROM cars
+    </select>
+
+</mapper>

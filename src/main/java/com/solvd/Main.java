@@ -20,7 +20,7 @@ public class Main {
 
     public static void main(String[] args) {
 
-        // ===== ТВОЯ СУЩЕСТВУЮЩАЯ ЛОГИКА (DOM DAO) =====
+
         UserService userService = new UserService(new UserDAO());
         User user = new User();
         user.setFirstName("Anna");
@@ -47,7 +47,6 @@ public class Main {
         boolean deleted = userService.deleteById(updatedUser.getId());
         LOGGER.info("Deleted: {}", deleted);
 
-        // ===== JAXB ЧАСТЬ =====
         LOGGER.info("===== JAXB PARSING =====");
 
         UserJaxbParser jaxbParser = new UserJaxbParser();
@@ -55,7 +54,6 @@ public class Main {
 
         users.getUsers().forEach(u -> LOGGER.info("JAXB User: {}", u));
 
-        // ===== JACKSON ЧАСТЬ =====
         LOGGER.info("===== JACKSON PARSING =====");
 
         JacksonParser jacksonParser = new JacksonParser();
@@ -64,7 +62,7 @@ public class Main {
         if (data.getUsers() != null) {
             data.getUsers().forEach(u -> LOGGER.info("JSON User: {}", u));
         }
-        // ===== MYBATIS ЧАСТЬ =====
+
         LOGGER.info("===== MYBATIS DAO =====");
 
         UserService myBatisUserService = new UserService(new UserMyBatisDAO());
